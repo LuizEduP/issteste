@@ -105,26 +105,30 @@ section.main {
 .metadata-value.monospace {
     font-family: 'Courier New', Courier, monospace;
 }
-.stSelectbox>div>div>div>div {
+.stSelectbox>div>div>div>div,
+.stSelectbox>div>div>div>div>div,
+.stSelectbox>div>div>div>div>div>div,
+.stSelectbox>div[role="combobox"],
+.stSelectbox div[role="button"] {
     border-radius: 22px;
-    background: rgba(26, 27, 33, 0.95);
+    background: rgba(29, 31, 39, 0.95) !important;
+    border: none !important;
+    box-shadow: none !important;
 }
-.stSelectbox>div>div>div>div>div {
-    background: rgba(255, 255, 255, 0.04) !important;
+.stSelectbox>div>div>div>div>div,
+.stSelectbox>div>div>div>div>div>div,
+.stSelectbox span,
+.stSelectbox div {
     color: #f8f4ec !important;
 }
 .stSelectbox>label {
     color: #c7c1b0;
 }
-.stSelectbox span,
-.stSelectbox div {
-    color: #f8f4ec !important;
-}
-.css-1cpxqw2 {
-    background: rgba(255,255,255,0.03) !important;
-}
+.css-1cpxqw2,
 .css-cio0dv {
-    background: rgba(255,255,255,0.03) !important;
+    background: rgba(29,31,39,0.95) !important;
+    border: none !important;
+    box-shadow: none !important;
 }
 </style>
 """
@@ -299,8 +303,6 @@ def main():
     except Exception as exc:
         st.error(f"Erro de persistência no banco de dados: {exc}")
         return
-
-    st.sidebar.markdown("<div style='padding: 1rem; color: #9aa7d1;'>Railway PostgreSQL conectado via DATABASE_URL</div>", unsafe_allow_html=True)
 
     df = load_prefeitura_data("prefeituras.xlsx")
 
