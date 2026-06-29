@@ -118,6 +118,9 @@ section.main {
 .stSelectbox span,
 .stSelectbox div {
     color: #f8f4ec !important;
+    text-shadow: none !important;
+    -webkit-text-stroke: 0px transparent !important;
+    -webkit-font-smoothing: antialiased !important;
 }
 .stSelectbox>label {
     color: #c7c1b0;
