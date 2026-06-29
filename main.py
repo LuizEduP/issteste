@@ -1,90 +1,305 @@
+import os
+import time
+import requests
 import streamlit as st
 import pandas as pd
-import requests
-import time
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
-# Configuração da página da Web
-st.set_page_config(page_title="Monitor de Instabilidade NFSe", page_icon="📊", layout="centered")
+PAGE_CSS = """
+<style>
+:root {
+    color-scheme: dark;
+}
+body {
+    background-color: #0e1117;
+}
+section.main {
+    background-color: #0e1117 !important;
+}
+#MainMenu, footer, header {
+    visibility: hidden !important;
+    height: 0px !important;
+}
+.block-container {
+    padding-top: 2rem;
+    padding-left: 2rem;
+    padding-right: 2rem;
+    background-color: #0e1117;
+}
+.stButton>button {
+    width: 100%;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #1f6feb 0%, #3aa9f8 100%);
+    color: #ffffff;
+    font-size: 1rem;
+    font-weight: 700;
+    padding: 0.85rem 1rem;
+    box-shadow: 0 14px 35px rgba(0, 0, 0, 0.2);
+    border: none;
+}
+.stButton>button:hover {
+    transform: translateY(-1px);
+}
+.title-gradient {
+    font-size: 2.5rem;
+    font-weight: 800;
+    background: linear-gradient(90deg, #8be9fd 0%, #6272a4 50%, #ff79c6 100%);
+    -webkit-background-clip: text;
+    color: transparent;
+    margin-bottom: 0.2rem;
+}
+.subtitle {
+    color: #a6accd;
+    margin-top: 0.2rem;
+}
+.badge-card, .metadata-card {
+    border: 1px solid rgba(255,255,255,0.07);
+    background: rgba(12, 15, 22, 0.88);
+    border-radius: 18px;
+    padding: 1.4rem;
+    box-shadow: 0 18px 45px rgba(0,0,0,0.25);
+}
+.badge-card {
+    text-align: center;
+}
+.badge-card .label {
+    color: #8ca0ff;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    font-size: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+.badge-card .value {
+    font-size: 2.4rem;
+    font-weight: 800;
+    color: #f8f8ff;
+}
+.metadata-card {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.4rem;
+    flex-wrap: wrap;
+}
+.metadata-item {
+    flex: 1;
+    min-width: 180px;
+    border-radius: 14px;
+    background: rgba(20, 24, 35, 0.95);
+    padding: 1rem;
+}
+.metadata-label {
+    color: #8ca0ff;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    margin-bottom: 0.55rem;
+}
+.metadata-value {
+    color: #f8f8ff;
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+.metadata-value.monospace {
+    font-family: 'Courier New', Courier, monospace;
+}
+.stSelectbox>div>div>div>div {
+    border-radius: 16px;
+    background: rgba(18, 24, 39, 0.95);
+}
+.stSelectbox>label {
+    color: #c0c6dc;
+}
+</style>
+"""
 
-st.title("📊 Monitor de Instabilidade NFSe")
+st.set_page_config(
+    page_title="Monitor de Instabilidade NFSe",
+    page_icon="📊",
+    layout="wide"
+)
+st.markdown(PAGE_CSS, unsafe_allow_html=True)
 
-col_main, col_help = st.columns([3, 1])
-with col_main:
-    st.markdown("Selecione o estado e a cidade para testar a comunicação com o WebService da prefeitura em tempo real.")
+EXPECTED_COLUMNS = [
+    "UF",
+    "Cidade",
+    "Provedor",
+    "Integração",
+    "URL Produção",
+    "URL Homologação"
+]
 
-with col_help:
-    if "ajudou_count" not in st.session_state:
-        st.session_state.ajudou_count = 0
+DB_TABLE_SQL = """
+CREATE TABLE IF NOT EXISTS contador_ajuda (
+    id INT PRIMARY KEY,
+    total INT NOT NULL DEFAULT 0
+);
+"""
 
-    st.markdown("### Me ajudou")
-    if st.button("Me ajudou"):
-        st.session_state.ajudou_count += 1
-    st.metric("Pessoas ajudadas", st.session_state.ajudou_count)
 
-# Função de teste de conexão
+def get_db_connection():
+    database_url = os.getenv("DATABASE_URL")
+    if not database_url:
+        raise EnvironmentError("A variável DATABASE_URL não está configurada no ambiente Railway.")
+
+    try:
+        connection = psycopg2.connect(database_url, sslmode="require", cursor_factory=RealDictCursor)
+        return connection
+    except Exception as exc:
+        raise ConnectionError(f"Falha ao conectar ao PostgreSQL: {exc}") from exc
+
+
+def ensure_counter_table():
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(DB_TABLE_SQL)
+            cursor.execute(
+                "INSERT INTO contador_ajuda (id, total) VALUES (1, 0) ON CONFLICT (id) DO NOTHING;"
+            )
+            conn.commit()
+
+
+def get_help_count():
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT total FROM contador_ajuda WHERE id = 1;")
+            row = cursor.fetchone()
+            return row["total"] if row else 0
+
+
+def increment_help_count():
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("UPDATE contador_ajuda SET total = total + 1 WHERE id = 1;")
+            conn.commit()
+
+
 def testar_endpoint(url):
     if pd.isna(url) or not str(url).strip().startswith("http"):
         return "erro", "Link inválido ou em branco na planilha."
-        
+
     url_final = str(url).strip()
     if "?wsdl" not in url_final.lower():
         url_final = f"{url_final}?wsdl"
-        
+
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-        'Accept': 'text/xml, text/html'
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+        "Accept": "text/xml, text/html"
     }
-    
+
     inicio = time.time()
     try:
         resposta = requests.get(url_final, headers=headers, timeout=10, verify=True)
         tempo = round(time.time() - inicio, 2)
-        
+
         if resposta.status_code == 200:
             return "online", f"✅ ONLINE | Servidor respondeu com sucesso em {tempo}s (Status 200 OK)."
-        else:
-            return "instavel", f"⚠️ INSTÁVEL | O servidor respondeu, mas retornou Erro HTTP {resposta.status_code} em {tempo}s."
-            
+        return "instavel", f"⚠️ INSTÁVEL | O servidor respondeu, mas retornou Erro HTTP {resposta.status_code} em {tempo}s."
+
     except requests.exceptions.Timeout:
         return "caido", "❌ FORA DO AR | Erro: TIMEOUT (O servidor demorou mais de 10 segundos para responder)."
     except requests.exceptions.ConnectionError:
         return "caido", "❌ FORA DO AR | Erro: FALHA DE CONEXÃO (Não foi possível estabelecer contato com o servidor)."
-    except Exception as e:
-        return "erro", f"❌ ERRO DESCONHECIDO | Detalhes: {e}"
+    except Exception as exc:
+        return "erro", f"❌ ERRO DESCONHECIDO | Detalhes: {exc}"
 
-# Carregar a planilha
-nome_arquivo = "prefeituras.xlsx"
-try:
-    df = pd.read_excel(nome_arquivo)
+
+def load_prefeitura_data(nome_arquivo):
+    if not os.path.exists(nome_arquivo):
+        raise FileNotFoundError(f"O arquivo '{nome_arquivo}' não foi encontrado no diretório atual.")
+
+    df = pd.read_excel(nome_arquivo, engine="openpyxl")
     df.columns = [c.strip() for c in df.columns]
-    df['UF'] = df['UF'].astype(str).str.strip().str.upper()
-    df['Cidade'] = df['Cidade'].astype(str).str.strip()
 
-    # --- INTERFACE DO USUÁRIO ---
-    
-    # 1. Seleção de UF
-    ufs_disponiveis = sorted(df['UF'].unique())
-    uf_escolhida = st.selectbox("1. Selecione a UF:", ufs_disponiveis)
+    missing_columns = [col for col in EXPECTED_COLUMNS if col not in df.columns]
+    if missing_columns:
+        raise ValueError(
+            f"A planilha precisa conter as colunas exatas: {', '.join(EXPECTED_COLUMNS)}. Colunas ausentes: {', '.join(missing_columns)}"
+        )
 
-    # Filtrar cidades pela UF escolhida
-    df_filtrado = df[df['UF'] == uf_escolhida]
-    cidades_disponiveis = sorted(df_filtrado['Cidade'].unique())
-    
-    # 2. Seleção de Cidade
-    cidade_escolhida = st.selectbox("2. Selecione a Cidade:", cidades_disponiveis)
+    df = df[EXPECTED_COLUMNS].copy()
+    df["UF"] = df["UF"].astype(str).str.strip().str.upper()
+    df["Cidade"] = df["Cidade"].astype(str).str.strip()
+    return df
 
-    # Buscar dados da cidade selecionada
-    linha_cidade = df_filtrado[df_filtrado['Cidade'] == cidade_escolhida].iloc[0]
-    
-    # Mostrar informações do provedor na tela
-    st.info(f"**Provedor:** {linha_cidade['Provedor']} | **Integração:** {linha_cidade['Integração']}")
 
-    # 3. Botão de Testar
-    if st.button("🚀 Testar Conexão Agora", use_container_width=True):
-        with st.spinner("Conectando ao WebService da prefeitura... Aguarde."):
-            status, mensagem = testar_endpoint(linha_cidade['URL Produção'])
-            
-            # Exibir alertas baseados no resultado técnico
+def render_header(contador_global):
+    col_title, col_badge = st.columns([3, 1], gap="large")
+
+    with col_title:
+        st.markdown("<div class='title-gradient'>Monitor de Instabilidade NFSe</div>", unsafe_allow_html=True)
+        st.markdown("<div class='subtitle'>Visão corporativa em tempo real para testes de conectividade de WebServices municipais.</div>", unsafe_allow_html=True)
+
+    with col_badge:
+        st.markdown(
+            "<div class='badge-card'>"
+            "<div class='label'>Contador global</div>"
+            f"<div class='value'>{contador_global}</div>"
+            "<div class='label' style='margin-top: 0.8rem;'>Pessoas ajudaram</div>"
+            "</div>",
+            unsafe_allow_html=True,
+        )
+        if st.button("👍 Me ajudou", key="me_ajudou"):
+            try:
+                increment_help_count()
+                st.experimental_rerun()
+            except Exception as exc:
+                st.error(f"Não foi possível atualizar o contador: {exc}")
+
+
+def render_metadata_card(linha):
+    st.markdown(
+        "<div class='metadata-card'>"
+        "<div class='metadata-item'>"
+        "<div class='metadata-label'>Provedor de Tecnologia</div>"
+        f"<div class='metadata-value'>{linha['Provedor']}</div>"
+        "</div>"
+        "<div class='metadata-item'>"
+        "<div class='metadata-label'>Modelo de Integração</div>"
+        f"<div class='metadata-value monospace'>{linha['Integração']}</div>"
+        "</div>"
+        "<div class='metadata-item'>"
+        "<div class='metadata-label'>Região Fiscal</div>"
+        f"<div class='metadata-value'>{linha['UF']}</div>"
+        "</div>"
+        "</div>",
+        unsafe_allow_html=True,
+    )
+
+
+def main():
+    try:
+        ensure_counter_table()
+        contador_global = get_help_count()
+    except Exception as exc:
+        st.error(f"Erro de persistência no banco de dados: {exc}")
+        return
+
+    st.sidebar.markdown("<div style='padding: 1rem; color: #9aa7d1;'>Railway PostgreSQL conectado via DATABASE_URL</div>", unsafe_allow_html=True)
+
+    df = load_prefeitura_data("prefeituras.xlsx")
+
+    render_header(contador_global)
+
+    st.markdown("---")
+
+    uf_col, cidade_col = st.columns(2, gap="large")
+    with uf_col:
+        uf_escolhida = st.selectbox("Selecione a UF", sorted(df["UF"].unique()))
+
+    with cidade_col:
+        cidades_disponiveis = sorted(df[df["UF"] == uf_escolhida]["Cidade"].unique())
+        cidade_escolhida = st.selectbox("Selecione a Cidade", cidades_disponiveis)
+
+    linha_cidade = df[(df["UF"] == uf_escolhida) & (df["Cidade"] == cidade_escolhida)].iloc[0]
+
+    render_metadata_card(linha_cidade)
+
+    st.markdown("---")
+
+    if st.button("🚀 Executar Teste de Conectividade", key="run_connectivity_test"):
+        with st.spinner("Executando verificação de conectividade no WebService..."):
+            status, mensagem = testar_endpoint(linha_cidade["URL Produção"])
             if status == "online":
                 st.success(mensagem)
             elif status == "instavel":
@@ -92,7 +307,6 @@ try:
             else:
                 st.error(mensagem)
 
-except FileNotFoundError:
-    st.error(f"Erro: O arquivo '{nome_arquivo}' não foi encontrado. Certifique-se de que ele foi enviado ao repositório.")
-except Exception as e:
-    st.error(f"Erro ao processar os dados: {e}")
+
+if __name__ == "__main__":
+    main()
