@@ -12,68 +12,70 @@ PAGE_CSS = """
     color-scheme: dark;
 }
 body {
-    background-color: #0e1117;
+    background-color: #11131a;
 }
 section.main {
-    background-color: #0e1117 !important;
+    background-color: #11131a !important;
 }
 #MainMenu, footer, header {
     visibility: hidden !important;
     height: 0px !important;
 }
 .block-container {
-    padding-top: 2rem;
-    padding-left: 2rem;
-    padding-right: 2rem;
-    background-color: #0e1117;
+    padding-top: 2.5rem;
+    padding-left: 2.5rem;
+    padding-right: 2.5rem;
+    background-color: #11131a;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 .stButton>button {
     width: 100%;
-    border-radius: 8px;
-    background: linear-gradient(135deg, #1f6feb 0%, #3aa9f8 100%);
-    color: #ffffff;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #8c6d52 0%, #b39f84 100%);
+    color: #faf8f2;
     font-size: 1rem;
     font-weight: 700;
-    padding: 0.85rem 1rem;
-    box-shadow: 0 14px 35px rgba(0, 0, 0, 0.2);
-    border: none;
+    padding: 0.95rem 1rem;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.08);
 }
 .stButton>button:hover {
     transform: translateY(-1px);
 }
 .title-gradient {
-    font-size: 2.5rem;
+    font-size: 2.4rem;
     font-weight: 800;
-    background: linear-gradient(90deg, #8be9fd 0%, #6272a4 50%, #ff79c6 100%);
+    background: linear-gradient(90deg, #e7d4b1 0%, #d8c2a2 55%, #f4eccf 100%);
     -webkit-background-clip: text;
     color: transparent;
     margin-bottom: 0.2rem;
 }
 .subtitle {
-    color: #a6accd;
-    margin-top: 0.2rem;
+    color: #c7c1b0;
+    margin-top: 0.35rem;
+    line-height: 1.6;
 }
 .badge-card, .metadata-card {
-    border: 1px solid rgba(255,255,255,0.07);
-    background: rgba(12, 15, 22, 0.88);
-    border-radius: 18px;
-    padding: 1.4rem;
-    box-shadow: 0 18px 45px rgba(0,0,0,0.25);
+    border: 1px solid rgba(240, 232, 218, 0.08);
+    background: rgba(22, 23, 31, 0.9);
+    border-radius: 24px;
+    padding: 1.5rem;
+    box-shadow: 0 16px 32px rgba(0,0,0,0.16);
 }
 .badge-card {
     text-align: center;
 }
 .badge-card .label {
-    color: #8ca0ff;
+    color: #dac7aa;
     text-transform: uppercase;
-    letter-spacing: 0.16em;
+    letter-spacing: 0.14em;
     font-size: 0.75rem;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.7rem;
 }
 .badge-card .value {
-    font-size: 2.4rem;
+    font-size: 2.2rem;
     font-weight: 800;
-    color: #f8f8ff;
+    color: #f8f4ec;
 }
 .metadata-card {
     display: flex;
@@ -83,20 +85,20 @@ section.main {
 }
 .metadata-item {
     flex: 1;
-    min-width: 180px;
-    border-radius: 14px;
-    background: rgba(20, 24, 35, 0.95);
-    padding: 1rem;
+    min-width: 200px;
+    border-radius: 24px;
+    background: rgba(35, 34, 41, 0.92);
+    padding: 1.2rem;
 }
 .metadata-label {
-    color: #8ca0ff;
+    color: #d8c7ad;
     font-size: 0.8rem;
     text-transform: uppercase;
-    letter-spacing: 0.14em;
+    letter-spacing: 0.12em;
     margin-bottom: 0.55rem;
 }
 .metadata-value {
-    color: #f8f8ff;
+    color: #f8f4ec;
     font-size: 1.05rem;
     font-weight: 700;
 }
@@ -104,11 +106,17 @@ section.main {
     font-family: 'Courier New', Courier, monospace;
 }
 .stSelectbox>div>div>div>div {
-    border-radius: 16px;
-    background: rgba(18, 24, 39, 0.95);
+    border-radius: 22px;
+    background: rgba(26, 27, 33, 0.95);
 }
 .stSelectbox>label {
-    color: #c0c6dc;
+    color: #c7c1b0;
+}
+.css-1cpxqw2 {
+    background: rgba(255,255,255,0.03) !important;
+}
+.css-cio0dv {
+    background: rgba(255,255,255,0.03) !important;
 }
 </style>
 """
@@ -228,23 +236,23 @@ def render_header(contador_global):
 
     with col_title:
         st.markdown("<div class='title-gradient'>Monitor de Instabilidade NFSe</div>", unsafe_allow_html=True)
-        st.markdown("<div class='subtitle'>Visão corporativa em tempo real para testes de conectividade de WebServices municipais.</div>", unsafe_allow_html=True)
+        st.markdown("<div class='subtitle'>Painel calm, Japanese café e lofi samurai para monitoramento corporativo.</div>", unsafe_allow_html=True)
 
     with col_badge:
-        st.markdown(
-            "<div class='badge-card'>"
-            "<div class='label'>Contador global</div>"
-            f"<div class='value'>{contador_global}</div>"
-            "<div class='label' style='margin-top: 0.8rem;'>Pessoas ajudaram</div>"
-            "</div>",
-            unsafe_allow_html=True,
-        )
         if st.button("👍 Me ajudou", key="me_ajudou"):
             try:
                 increment_help_count()
-                st.experimental_rerun()
             except Exception as exc:
                 st.error(f"Não foi possível atualizar o contador: {exc}")
+
+        st.markdown(
+            "<div class='badge-card'>"
+            "<div class='label'>Contador global</div>"
+            f"<div class='value'>{get_help_count()}</div>"
+            "<div class='label' style='margin-top: 0.8rem;'>Apoiadores</div>"
+            "</div>",
+            unsafe_allow_html=True,
+        )
 
 
 def render_metadata_card(linha):
