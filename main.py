@@ -131,6 +131,10 @@ section.main {
     border: none !important;
     box-shadow: none !important;
 }
+.stSelectbox [data-baseweb="select"] span,
+.stSelectbox [data-baseweb="select"] div[data-testid="stMarkdownContainer"] {
+    background-color: transparent !important;
+}
 </style>
 """
 
