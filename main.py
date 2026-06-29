@@ -244,9 +244,16 @@ def render_header(contador_global):
 
     with col_title:
         st.markdown("<div class='title-gradient'>Monitor de Instabilidade NFSe</div>", unsafe_allow_html=True)
-        st.markdown("<div class='subtitle'>Este código é um monitor web que testa se o sistema de Nota Fiscal (NFSe) de uma cidade está online, fazendo um teste rápido de conexão (ping) na URL do servidor.
-
-O detalhe importante: A resposta do teste nem sempre reflete a realidade do sistema como um todo. Se o teste der erro, pode ser apenas uma instabilidade momentânea na rota da internet ou um bloqueio de segurança no servidor, e não necessariamente significa que a emissão de notas está completamente fora do ar para todo mundo. O monitor serve como um indicativo rápido, mas não é uma verdade absoluta.</div>", unsafe_allow_html=True)
+        st.markdown(
+            "<div class='subtitle'>"
+            "Este código é um monitor web que testa se o sistema de Nota Fiscal (NFSe) de uma cidade está online, fazendo um teste rápido de conexão (ping) na URL do servidor. "
+            "O detalhe importante: A resposta do teste nem sempre reflete a realidade do sistema como um todo. "
+            "Se o teste der erro, pode ser apenas uma instabilidade momentânea na rota da internet ou um bloqueio de segurança no servidor, "
+            "e não necessariamente significa que a emissão de notas está completamente fora do ar para todo mundo. "
+            "O monitor serve como um indicativo rápido, mas não é uma verdade absoluta."
+            "</div>",
+            unsafe_allow_html=True,
+        )
 
     with col_badge:
         if st.button("Me ajudou 👍", key="me_ajudou"):
