@@ -109,8 +109,16 @@ section.main {
     border-radius: 22px;
     background: rgba(26, 27, 33, 0.95);
 }
+.stSelectbox>div>div>div>div>div {
+    background: rgba(255, 255, 255, 0.04) !important;
+    color: #f8f4ec !important;
+}
 .stSelectbox>label {
     color: #c7c1b0;
+}
+.stSelectbox span,
+.stSelectbox div {
+    color: #f8f4ec !important;
 }
 .css-1cpxqw2 {
     background: rgba(255,255,255,0.03) !important;
@@ -236,10 +244,12 @@ def render_header(contador_global):
 
     with col_title:
         st.markdown("<div class='title-gradient'>Monitor de Instabilidade NFSe</div>", unsafe_allow_html=True)
-        st.markdown("<div class='subtitle'>Painel calm, Japanese café e lofi samurai para monitoramento corporativo.</div>", unsafe_allow_html=True)
+        st.markdown("<div class='subtitle'>Este código é um monitor web que testa se o sistema de Nota Fiscal (NFSe) de uma cidade está online, fazendo um teste rápido de conexão (ping) na URL do servidor.
+
+O detalhe importante: A resposta do teste nem sempre reflete a realidade do sistema como um todo. Se o teste der erro, pode ser apenas uma instabilidade momentânea na rota da internet ou um bloqueio de segurança no servidor, e não necessariamente significa que a emissão de notas está completamente fora do ar para todo mundo. O monitor serve como um indicativo rápido, mas não é uma verdade absoluta.</div>", unsafe_allow_html=True)
 
     with col_badge:
-        if st.button("👍 Me ajudou", key="me_ajudou"):
+        if st.button("Me ajudou 👍", key="me_ajudou"):
             try:
                 increment_help_count()
             except Exception as exc:
@@ -247,9 +257,9 @@ def render_header(contador_global):
 
         st.markdown(
             "<div class='badge-card'>"
-            "<div class='label'>Contador global</div>"
+            "<div class='label'>Contador</div>"
             f"<div class='value'>{get_help_count()}</div>"
-            "<div class='label' style='margin-top: 0.8rem;'>Apoiadores</div>"
+            "<div class='label' style='margin-top: 0.8rem;'>De quantas pessoas foram ajudadas</div>"
             "</div>",
             unsafe_allow_html=True,
         )
