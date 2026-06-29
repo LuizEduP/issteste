@@ -45,9 +45,7 @@ section.main {
 .title-gradient {
     font-size: 2.4rem;
     font-weight: 800;
-    background: linear-gradient(90deg, #e7d4b1 0%, #d8c2a2 55%, #f4eccf 100%);
-    -webkit-background-clip: text;
-    color: transparent;
+    color: #f8f4ec;
     margin-bottom: 0.2rem;
 }
 .subtitle {
