@@ -7,7 +7,19 @@ import time
 st.set_page_config(page_title="Monitor de Instabilidade NFSe", page_icon="📊", layout="centered")
 
 st.title("📊 Monitor de Instabilidade NFSe")
-st.markdown("Selecione o estado e a cidade para testar a comunicação com o WebService da prefeitura em tempo real.")
+
+col_main, col_help = st.columns([3, 1])
+with col_main:
+    st.markdown("Selecione o estado e a cidade para testar a comunicação com o WebService da prefeitura em tempo real.")
+
+with col_help:
+    if "ajudou_count" not in st.session_state:
+        st.session_state.ajudou_count = 0
+
+    st.markdown("### Me ajudou")
+    if st.button("Me ajudou"):
+        st.session_state.ajudou_count += 1
+    st.metric("Pessoas ajudadas", st.session_state.ajudou_count)
 
 # Função de teste de conexão
 def testar_endpoint(url):
